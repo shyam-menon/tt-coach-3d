@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TT Coach 3D</title>
+<!--IMPORTMAP-->
+<style>
+:root{--bg:#0e1116;--panel:#151a21;--panel2:#1b212a;--line:#273040;--text:#e6edf3;--muted:#8b98a8;--accent:#4fc3f7;--good:#3fb950;--ok:#d29922;--bad:#f85149;--chip:#222a35}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+#app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-size:16px;margin:0;font-weight:650;letter-spacing:.2px;white-space:nowrap}
+header h1 span{color:var(--accent)}
+header .sp{flex:1}
+header select{background:var(--chip);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:5px 8px;font:inherit}
+.btn{background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:6px 10px;min-height:34px}
+.btn:hover{border-color:#3a4658}
+.btn.primary{background:#1d4f6e;border-color:#2c6c93}
+.btn.on{background:#1d4f6e;border-color:var(--accent)}
+#main{flex:1;display:grid;grid-template-columns:250px 1fr 390px;min-height:0}
+nav{border-right:1px solid var(--line);overflow:auto;background:var(--panel);padding:8px 0}
+nav .mod{padding:10px 14px 4px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.6px;display:flex;justify-content:space-between}
+nav a{display:flex;gap:8px;align-items:center;padding:7px 14px;color:var(--text);text-decoration:none;cursor:pointer;border-left:3px solid transparent}
+nav a:hover{background:var(--panel2)}
+nav a.cur{background:var(--panel2);border-left-color:var(--accent)}
+nav a .ck{width:16px;color:var(--good);flex:none;text-align:center}
+#stageWrap{display:flex;flex-direction:column;min-width:0;min-height:0}
+#stage{position:relative;flex:1;min-height:0;overflow:hidden;touch-action:none}
+#stage canvas{display:block;width:100%;height:100%}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.callout{position:absolute;left:0;top:0;display:flex;align-items:flex-start;gap:0;white-space:nowrap}
+.callout .dot{width:9px;height:9px;border-radius:50%;background:#ffe066;border:2px solid #111;margin:-4px 0 0 -4px;flex:none}
+.callout .txt{margin:-26px 0 0 6px;background:rgba(10,14,20,.86);border:1px solid #ffe06666;color:#fff;padding:2px 7px;border-radius:6px;font-size:12px}
+.protlabel{position:absolute;left:0;top:0;background:#0b3550e6;color:#bfe9ff;border:1px solid var(--accent);padding:2px 7px;border-radius:6px;font-size:12px;font-weight:600;margin:-12px 0 0 6px;white-space:nowrap}
+.protlabel.toss{background:#11301ae6;color:#bdf5c7;border-color:#7ee787}
+#hud{position:absolute;left:10px;bottom:10px;background:rgba(10,14,20,.78);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:12px;pointer-events:none;max-width:70%}
+#hud b{color:var(--accent);font-weight:600}
+#hud .contact{color:#ffe066;font-weight:700}
+#camBar{position:absolute;top:8px;left:8px;right:56px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+#camBar::-webkit-scrollbar{display:none}
+.chip{background:rgba(20,26,34,.88);border:1px solid var(--line);border-radius:16px;padding:5px 11px;white-space:nowrap;font-size:12.5px}
+.chip.on{border-color:var(--accent);color:#fff;background:#14384f}
+#layersBtn{position:absolute;top:8px;right:8px;width:40px;height:32px;border-radius:9px;background:rgba(20,26,34,.9);border:1px solid var(--line)}
+#layers{position:absolute;top:46px;right:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px;display:none;z-index:5;min-width:170px}
+#layers.open{display:block}
+#layers label{display:flex;gap:8px;align-items:center;padding:5px 4px;cursor:pointer}
+#badge{position:absolute;top:46px;left:8px;background:#4a1c1ce6;border:1px solid var(--bad);color:#ffd7d5;border-radius:8px;padding:4px 9px;font-size:12.5px;display:none;max-width:70%}
+#badge.variant{background:#173246e6;border-color:var(--accent);color:#d7f0ff}
+#playbar{display:flex;align-items:center;gap:6px;padding:8px 10px;border-top:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+#playbar .btn{min-width:38px;padding:6px 8px}
+#scrub{flex:1;min-width:120px;accent-color:var(--accent)}
+#time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px;width:76px;text-align:right}
+.speeds{display:flex;gap:4px}
+.speeds .btn{min-width:44px;font-size:12.5px}
+#panel{border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--panel)}
+.tabs{display:flex;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;background:none;border:0;border-bottom:2px solid transparent;padding:11px 4px;color:var(--muted);font-weight:600}
+.tabs button.on{color:var(--text);border-bottom-color:var(--accent)}
+.tab{flex:1;overflow:auto;padding:14px 16px;display:none}
+.tab.on{display:block}
+h2{font-size:19px;margin:2px 0 6px}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:18px 0 8px}
+.muted{color:var(--muted)}
+.why{color:#c9d4e0}
+ol.keys{padding-left:20px;margin:6px 0}
+ol.keys li{margin:4px 0}
+.cmp{display:flex;flex-wrap:wrap;gap:6px}
+.cmp .btn.mistake.on{border-color:var(--bad);background:#3a1a1a}
+.cmp .btn.variant.on{border-color:var(--accent)}
+.note{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-top:8px}
+.note.bad{border-color:#f8514966}
+.note .res{color:#ffb4ae;font-weight:600}
+.q{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;margin:8px 0}
+.q .opts{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.q .opts button{text-align:left;background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.q .opts button.right{border-color:var(--good);background:#12301b}
+.q .opts button.wrong{border-color:var(--bad);background:#3a1a1a}
+.q .ex{margin-top:6px;color:#c9d4e0;display:none}
+.drill{background:#13261a;border:1px solid #2a5a37;border-radius:10px;padding:10px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.matrix{width:100%;border-collapse:separate;border-spacing:3px;font-size:12px}
+.matrix th{color:var(--muted);font-weight:600;text-align:left;padding:4px}
+.matrix td button{width:100%;border-radius:7px;padding:7px 4px;border:1px solid var(--line);font-size:12px}
+.matrix .good{background:#12301b;border-color:#2f6b3d}.matrix .ok{background:#33280f;border-color:#6b5420}.matrix .bad{background:#3a1a1a;border-color:#6b2a2a}
+.matrix td button.sel{outline:2px solid var(--accent)}
+textarea{width:100%;min-height:76px;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;resize:vertical}
+.ex-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ex-chips button{background:var(--chip);border:1px solid var(--line);border-radius:14px;padding:5px 10px;font-size:12.5px;text-align:left}
+.answer{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px}
+.answer .qtext{color:var(--muted);font-size:12.5px;margin-bottom:6px}
+.answer ol{padding-left:20px;margin:8px 0}
+.status{font-size:12.5px;color:var(--muted);margin-bottom:8px}
+.status.warn{color:#f0c674}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}
+.bar{height:7px;background:#232b36;border-radius:4px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.doubt{padding:8px 0;border-top:1px solid var(--line);cursor:pointer}
+.doubt:first-child{border-top:0}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--muted);border-top-color:transparent;border-radius:50%;animation:sp 0.8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+#navBtn{display:none}
+#scrim{display:none}
+@media (max-width: 900px){
+  #main{display:flex;flex-direction:column}
+  #stageWrap{height:56vh;flex:none}
+  #panel{flex:1;border-left:0;border-top:1px solid var(--line)}
+  nav{position:fixed;z-index:20;left:0;top:0;bottom:0;width:82%;max-width:320px;transform:translateX(-100%);transition:transform .2s;box-shadow:0 0 30px #000}
+  nav.open{transform:none}
+  #scrim.open{display:block;position:fixed;inset:0;background:#0008;z-index:19}
+  #navBtn{display:inline-block}
+  header h1{font-size:15px}
+  .hide-sm{display:none}
+  #playbar{gap:5px;padding:6px 8px}
+  .speeds .btn{min-width:40px}
+  #time{display:none}
+  #hud{font-size:10.5px;padding:4px 7px;left:6px;bottom:6px;line-height:1.3}
+  .callout .txt{font-size:11px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <button class="btn" id="navBtn" aria-label="Lessons">☰ Lessons</button>
+    <h1>TT Coach <span>3D</span></h1>
+    <div class="sp"></div>
+    <select id="handSel" aria-label="Playing hand"><option value="R">Right-handed</option><option value="L">Left-handed</option></select>
+    <select id="gripSel" class="hide-sm" aria-label="Grip"><option value="mine">My grip</option><option value="shake">Shakehand (textbook)</option><option value="pen">Penhold</option></select>
+    <select id="rubberSel" class="hide-sm" aria-label="Forehand rubber colour"><option value="black">Forehand: black</option><option value="red">Forehand: red</option></select>
+  </header>
+  <div id="main">
+    <nav id="nav"></nav>
+    <div id="scrim"></div>
+    <section id="stageWrap">
+      <div id="stage">
+        <div id="labels"></div>
+        <div id="camBar"></div>
+        <button id="layersBtn" aria-label="Layers">◫</button>
+        <div id="layers"></div>
+        <div id="badge"></div>
+        <div id="hud"></div>
+      </div>
+      <div id="playbar">
+        <button class="btn" id="stepB" title="Step back (←)">⏮</button>
+        <button class="btn primary" id="playBtn" title="Play/pause (space)">⏸</button>
+        <button class="btn" id="stepF" title="Step forward (→)">⏭</button>
+        <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Timeline">
+        <span id="time">0.00 s</span>
+        <div class="speeds" id="speeds"></div>
+        <button class="btn" id="contactBtn" title="Jump to contact">◎ Contact</button>
+        <button class="btn on" id="loopBtn" title="Loop">⟲</button>
+      </div>
+    </section>
+    <section id="panel">
+      <div class="tabs" role="tablist">
+        <button data-tab="lesson" class="on">Lesson</button>
+        <button data-tab="ask">Ask the Coach</button>
+        <button data-tab="practice">Practice</button>
+        <button data-tab="progress">Progress</button>
+      </div>
+      <div class="tab on" id="tab-lesson"></div>
+      <div class="tab" id="tab-ask"></div>
+      <div class="tab" id="tab-practice"></div>
+      <div class="tab" id="tab-progress"></div>
+    </section>
+  </div>
+</div>
+<script type="module">
+/*APP*/
+</script>
+</body>
+</html>
