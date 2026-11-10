@@ -8,9 +8,9 @@
 <style>
 :root{--bg:#0e1116;--panel:#151a21;--panel2:#1b212a;--line:#273040;--text:#e6edf3;--muted:#8b98a8;--accent:#4fc3f7;--good:#3fb950;--ok:#d29922;--bad:#f85149;--chip:#222a35}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+html,body{margin:0;height:100%;overscroll-behavior:none;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 button{font:inherit;color:inherit;cursor:pointer}
-#app{display:flex;flex-direction:column;height:100%}
+#app{display:flex;flex-direction:column;height:100%;height:100dvh}
 header{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
 header h1{font-size:16px;margin:0;font-weight:650;letter-spacing:.2px;white-space:nowrap}
 header h1 span{color:var(--accent)}
@@ -33,17 +33,16 @@ nav a .ck{width:16px;color:var(--good);flex:none;text-align:center}
 #labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .callout{position:absolute;left:0;top:0;display:flex;align-items:flex-start;gap:0;white-space:nowrap}
 .callout .dot{width:9px;height:9px;border-radius:50%;background:#ffe066;border:2px solid #111;margin:-4px 0 0 -4px;flex:none}
-.callout .txt{margin:-26px 0 0 6px;background:rgba(10,14,20,.86);border:1px solid #ffe06666;color:#fff;padding:2px 7px;border-radius:6px;font-size:12px}
+.callout .txt{margin:var(--dy,-26px) 0 0 var(--dx,6px);background:rgba(10,14,20,.86);border:1px solid #ffe06666;color:#fff;padding:2px 7px;border-radius:6px;font-size:12px}
 .protlabel{position:absolute;left:0;top:0;background:#0b3550e6;color:#bfe9ff;border:1px solid var(--accent);padding:2px 7px;border-radius:6px;font-size:12px;font-weight:600;margin:-12px 0 0 6px;white-space:nowrap}
 .protlabel.toss{background:#11301ae6;color:#bdf5c7;border-color:#7ee787}
 #hud{position:absolute;left:10px;bottom:10px;background:rgba(10,14,20,.78);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:12px;pointer-events:none;max-width:70%}
 #hud b{color:var(--accent);font-weight:600}
 #hud .contact{color:#ffe066;font-weight:700}
-#camBar{position:absolute;top:8px;left:8px;right:56px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+#camBar{position:absolute;top:8px;left:8px;right:56px;-webkit-overflow-scrolling:touch;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
 #camBar::-webkit-scrollbar{display:none}
 .chip{background:rgba(20,26,34,.88);border:1px solid var(--line);border-radius:16px;padding:5px 11px;white-space:nowrap;font-size:12.5px}
 .chip.on{border-color:var(--accent);color:#fff;background:#14384f}
-#layersBtn{position:absolute;top:8px;right:8px;width:40px;height:32px;border-radius:9px;background:rgba(20,26,34,.9);border:1px solid var(--line)}
 #layers{position:absolute;top:46px;right:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px;display:none;z-index:5;min-width:170px}
 #layers.open{display:block}
 #layers label{display:flex;gap:8px;align-items:center;padding:5px 4px;cursor:pointer}
@@ -81,6 +80,9 @@ ol.keys li{margin:4px 0}
 .q .ex{margin-top:6px;color:#c9d4e0;display:none}
 .drill{background:#13261a;border:1px solid #2a5a37;border-radius:10px;padding:10px}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row .sp{flex:1}
+.lessonNav .btn{min-width:40px;min-height:34px;padding:2px 8px;font-size:18px;line-height:1}
+.btn:disabled{opacity:.4;cursor:default}
 .matrix{width:100%;border-collapse:separate;border-spacing:3px;font-size:12px}
 .matrix th{color:var(--muted);font-weight:600;text-align:left;padding:4px}
 .matrix td button{width:100%;border-radius:7px;padding:7px 4px;border:1px solid var(--line);font-size:12px}
@@ -101,6 +103,17 @@ textarea{width:100%;min-height:76px;background:var(--panel2);color:var(--text);b
 .doubt:first-child{border-top:0}
 .spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--muted);border-top-color:transparent;border-radius:50%;animation:sp 0.8s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes sp{to{transform:rotate(360deg)}}
+
+#setBtn{display:none}
+#settings{display:flex;gap:8px}
+#settings label span{display:none}
+#bigBtn,#layersBtn{position:absolute;top:8px;width:40px;height:34px;border-radius:9px;background:rgba(20,26,34,.9);border:1px solid var(--line)}
+#layersBtn{right:8px}
+#bigBtn{right:54px}
+#camBar{right:102px}
+#speedCycle{display:none}
+body.big nav,body.big #panel{display:none}
+body.big #main{grid-template-columns:1fr}
 #navBtn{display:none}
 #scrim{display:none}
 @media (max-width: 900px){
@@ -113,11 +126,30 @@ textarea{width:100%;min-height:76px;background:var(--panel2);color:var(--text);b
   #navBtn{display:inline-block}
   header h1{font-size:15px}
   .hide-sm{display:none}
-  #playbar{gap:5px;padding:6px 8px}
-  .speeds .btn{min-width:40px}
+  header{padding:6px 8px;gap:8px;position:relative}
+  #setBtn{display:inline-block;min-width:42px;min-height:40px}
+  #navBtn{min-height:40px}
+  #settings{display:none;position:absolute;right:8px;top:52px;z-index:30;flex-direction:column;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 10px 30px #000a;width:min(280px,calc(100vw - 16px))}
+  #settings.open{display:flex}
+  #settings label{display:flex;flex-direction:column;gap:4px}
+  #settings label span{display:block;font-size:12px;color:var(--muted)}
+  #settings select{min-height:42px;font-size:15px}
+  #playbar{gap:6px;padding:6px 8px;flex-wrap:nowrap}
+  #playbar .btn{min-width:44px;min-height:44px}
+  #stepB,#stepF,#loopBtn,#speeds{display:none}
+  #speedCycle{display:inline-block;min-width:58px;font-variant-numeric:tabular-nums}
+  #scrub{min-width:60px;height:44px}
   #time{display:none}
+  .chip{padding:8px 13px;font-size:13px}
+  #bigBtn,#layersBtn{height:36px;width:42px}
+  .tabs button{padding:13px 4px}
+  .tab{padding:12px 14px calc(16px + env(safe-area-inset-bottom))}
+  .btn{min-height:42px}
+  .q .opts button{padding:11px 10px}
+  body.big #stageWrap{flex:1;height:auto}
+  body.big #main{display:flex}
   #hud{font-size:10.5px;padding:4px 7px;left:6px;bottom:6px;line-height:1.3}
-  .callout .txt{font-size:11px}
+  .callout .txt{font-size:11.5px;max-width:56vw;white-space:normal;line-height:1.25}
 }
 </style>
 </head>
@@ -127,9 +159,12 @@ textarea{width:100%;min-height:76px;background:var(--panel2);color:var(--text);b
     <button class="btn" id="navBtn" aria-label="Lessons">☰ Lessons</button>
     <h1>TT Coach <span>3D</span></h1>
     <div class="sp"></div>
-    <select id="handSel" aria-label="Playing hand"><option value="R">Right-handed</option><option value="L">Left-handed</option></select>
-    <select id="gripSel" class="hide-sm" aria-label="Grip"><option value="mine">My grip</option><option value="shake">Shakehand (textbook)</option><option value="pen">Penhold</option></select>
-    <select id="rubberSel" class="hide-sm" aria-label="Forehand rubber colour"><option value="black">Forehand: black</option><option value="red">Forehand: red</option></select>
+    <button class="btn" id="setBtn" aria-label="Settings" aria-expanded="false">⚙</button>
+    <div id="settings">
+      <label><span>Playing hand</span><select id="handSel"><option value="R">Right-handed</option><option value="L">Left-handed</option></select></label>
+      <label><span>Grip</span><select id="gripSel"><option value="mine">My grip</option><option value="shake">Shakehand (textbook)</option><option value="pen">Penhold</option></select></label>
+      <label><span>Forehand rubber</span><select id="rubberSel"><option value="black">Forehand: black</option><option value="red">Forehand: red</option></select></label>
+    </div>
   </header>
   <div id="main">
     <nav id="nav"></nav>
@@ -138,26 +173,28 @@ textarea{width:100%;min-height:76px;background:var(--panel2);color:var(--text);b
       <div id="stage">
         <div id="labels"></div>
         <div id="camBar"></div>
+        <button id="bigBtn" aria-label="Expand 3D view">⤢</button>
         <button id="layersBtn" aria-label="Layers">◫</button>
         <div id="layers"></div>
         <div id="badge"></div>
         <div id="hud"></div>
       </div>
       <div id="playbar">
-        <button class="btn" id="stepB" title="Step back (←)">⏮</button>
+        <button class="btn" id="stepB" title="Step back (←)" aria-label="Step back">⏮</button>
         <button class="btn primary" id="playBtn" title="Play/pause (space)">⏸</button>
-        <button class="btn" id="stepF" title="Step forward (→)">⏭</button>
+        <button class="btn" id="stepF" title="Step forward (→)" aria-label="Step forward">⏭</button>
         <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Timeline">
         <span id="time">0.00 s</span>
         <div class="speeds" id="speeds"></div>
-        <button class="btn" id="contactBtn" title="Jump to contact">◎ Contact</button>
+        <button class="btn" id="speedCycle" aria-label="Change speed">0.5×</button>
+        <button class="btn" id="contactBtn" title="Jump to contact" aria-label="Jump to contact">◎<span class="hide-sm"> Contact</span></button>
         <button class="btn on" id="loopBtn" title="Loop">⟲</button>
       </div>
     </section>
     <section id="panel">
       <div class="tabs" role="tablist">
         <button data-tab="lesson" class="on">Lesson</button>
-        <button data-tab="ask">Ask the Coach</button>
+        <button data-tab="ask">Ask<span class="hide-sm"> the Coach</span></button>
         <button data-tab="practice">Practice</button>
         <button data-tab="progress">Progress</button>
       </div>
@@ -901,7 +938,10 @@ function poseAt(entries, t) {
     if (t >= e.start && t <= e.end) {
       const tau = t - e.start, p = sampleInst(e.inst, e.inst.static ? tau % e.inst.dur : tau);
       const ramp = e.inst.tc ? Math.max(0.2, e.inst.tc * 0.9) : 0.3;
-      p.rootOff = e.prevOff.clone().lerp(e.rootOff, smooth(tau / ramp)); p.inst = e.inst; p.tau = tau; return p;
+      p.rootOff = e.prevOff.clone().lerp(e.rootOff, smooth(tau / ramp)); p.inst = e.inst; p.tau = tau;
+      p.step = { from: e.prevOff, to: e.rootOff, u: clamp(tau / ramp, 0, 1) };
+      if (e.stepIn) { const tcE = (e.inst.tc || 0) + 0.12, w = smooth(tau / ramp) * (tau > tcE ? 1 - smooth((tau - tcE) / Math.max(0.2, e.inst.dur - tcE)) : 1); p.stepIn = e.stepIn * w; p.stepW = w; }
+      return p;
     }
     if (nx && t > e.end && t < nx.start) {
       const p = blendPose(sampleInst(e.inst, e.inst.dur), sampleInst(nx.inst, 0), smooth((t - e.end) / (nx.start - e.end)));
@@ -943,15 +983,26 @@ class Player {
     const add = (m, parent = this.body) => { m.castShadow = cast; parent.add(m); return m; };
     const cyl = (r1, r2, m, parent) => add(new THREE.Mesh(new THREE.CylinderGeometry(r2, r1, 1, 16), m), parent);
     const sph = (r, m, parent) => add(new THREE.Mesh(new THREE.SphereGeometry(r, 20, 14), m), parent);
-    this.torso = add(new THREE.Mesh(new THREE.CapsuleGeometry(0.14, 0.24, 8, 18), this.M.shirt)); this.torso.scale.set(1.3, 1, 0.72);
-    this.pelvis = sph(0.13, this.M.shorts); this.pelvis.scale.set(1.25, 0.75, 0.85);
-    this.neck = cyl(0.045, 0.045, this.M.skin); this.head = sph(0.1, this.M.skin);
-    this.hair = sph(0.103, ghost ? gm : stdMat(0x2a2018)); this.hair.scale.set(1, 0.75, 1);
+    const lathe = (pts, sz, m) => { const g = new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0], p[1])), 28); g.scale(1, 1, sz); g.computeVertexNormals(); return add(new THREE.Mesh(g, m)); };
+    this.chest = lathe([[0.001, -0.03], [0.128, -0.03], [0.14, 0.02], [0.158, 0.1], [0.172, 0.19], [0.176, 0.235], [0.152, 0.275], [0.075, 0.298], [0.05, 0.315], [0.001, 0.315]], 0.62, this.M.shirt);
+    this.abdomen = lathe([[0.001, -0.05], [0.15, -0.05], [0.152, -0.02], [0.145, 0.08], [0.139, 0.2], [0.001, 0.2]], 0.76, this.M.shirt);
+    this.pelvis = sph(0.13, this.M.shorts); this.pelvis.scale.set(1.42, 0.9, 0.84);
+    this.neck = cyl(0.044, 0.04, this.M.skin);
+    this.headG = new THREE.Group(); this.body.add(this.headG);
+    const hairM = ghost ? gm : stdMat(0x1d1612, { roughness: 0.9 }), darkM = ghost ? gm : stdMat(0x15100c);
+    this.head = sph(1, this.M.skin, this.headG); this.head.scale.set(0.088, 0.108, 0.098);
+    this.hair = add(new THREE.Mesh(new THREE.SphereGeometry(1, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.52), hairM), this.headG); this.hair.scale.set(0.093, 0.106, 0.104); this.hair.position.set(0, 0.012, 0.008); this.hair.rotation.x = 0.45;
+    for (const sx of [-1, 1]) {
+      const ear = sph(0.018, this.M.skin, this.headG); ear.position.set(sx * 0.088, -0.005, 0.008); ear.scale.set(0.5, 1, 0.8);
+      const eye = sph(0.0105, darkM, this.headG); eye.position.set(sx * 0.034, 0.014, -0.088);
+      const brow = add(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.006, 0.008), hairM), this.headG); brow.position.set(sx * 0.034, 0.034, -0.09);
+    }
+    const nose = sph(0.014, this.M.skin, this.headG); nose.position.set(0, -0.012, -0.099); nose.scale.set(0.8, 1.2, 1);
     this.arm = new THREE.Group(); R.add(this.arm);
-    this.uaR = cyl(0.047, 0.04, this.M.skin, this.arm); this.faR = cyl(0.039, 0.031, this.M.skin, this.arm);
-    this.shRj = sph(0.055, this.M.sleeve, this.arm); this.elRj = sph(0.04, this.M.skin, this.arm); this.wrRj = sph(0.027, this.M.skin, this.arm);
-    this.uaL = cyl(0.047, 0.04, this.M.skin); this.faL = cyl(0.039, 0.03, this.M.skin);
-    this.shLj = sph(0.055, this.M.sleeve); this.elLj = sph(0.04, this.M.skin);
+    this.uaR = cyl(0.046, 0.039, this.M.skin, this.arm); this.faR = cyl(0.041, 0.027, this.M.skin, this.arm); this.slR = cyl(0.057, 0.051, this.M.sleeve, this.arm);
+    this.shRj = sph(0.058, this.M.sleeve, this.arm); this.elRj = sph(0.04, this.M.skin, this.arm); this.wrRj = sph(0.027, this.M.skin, this.arm);
+    this.uaL = cyl(0.046, 0.039, this.M.skin); this.faL = cyl(0.041, 0.029, this.M.skin); this.slL = cyl(0.057, 0.051, this.M.sleeve);
+    this.shLj = sph(0.058, this.M.sleeve); this.elLj = sph(0.04, this.M.skin);
     this.freeHand = new THREE.Group(); this.body.add(this.freeHand);
     // free (left) hand: rounded palm + curled fingers; local z = toward fingertips, y = back of hand
     const fh = this.freeHand, M = this.M.skin;
@@ -969,9 +1020,13 @@ class Player {
     this.freeThumb = new THREE.Group(); this.freeThumb.position.set(0.04, -0.008, 0.03); fh.add(this.freeThumb);
     const th = capsule(0.0095, 0.045); th.rotation.x = Math.PI / 2; th.position.z = 0.03; fh.remove(th); this.freeThumb.add(th);
     this.legs = {};
+    const soleM = ghost ? gm : stdMat(0x2b2f36), sockM = ghost ? gm : stdMat(0xf4f4f4), trimM = ghost ? gm : stdMat(shirt);
     for (const s of ['L', 'R']) {
-      this.legs[s] = { th: cyl(0.072, 0.054, this.M.shorts), sh: cyl(0.052, 0.04, this.M.skin), kn: sph(0.055, this.M.skin),
-        foot: add(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.06, 0.26), this.M.shoe)) };
+      const shoe = new THREE.Group(); this.body.add(shoe);
+      const upper = add(new THREE.Mesh(new THREE.CapsuleGeometry(0.046, 0.15, 6, 14), this.M.shoe), shoe); upper.rotation.x = Math.PI / 2; upper.scale.set(1, 1, 0.82); upper.position.set(0, 0.05, -0.045);
+      const sole = add(new THREE.Mesh(new THREE.CapsuleGeometry(0.048, 0.155, 4, 14), soleM), shoe); sole.rotation.x = Math.PI / 2; sole.scale.set(1, 1, 0.3); sole.position.set(0, 0.014, -0.045);
+      const trim = add(new THREE.Mesh(new THREE.BoxGeometry(0.094, 0.012, 0.09), trimM), shoe); trim.position.set(0, 0.058, -0.03);
+      this.legs[s] = { th: cyl(0.078, 0.056, this.M.skin), sho: cyl(0.092, 0.084, this.M.shorts), sh: cyl(0.054, 0.037, this.M.skin), kn: sph(0.055, this.M.skin), sock: cyl(0.041, 0.043, sockM), hj: sph(0.091, this.M.shorts), shoe };
     }
     // racket
     this.racket = new THREE.Group(); R.add(this.racket);
@@ -1028,6 +1083,37 @@ class Player {
     this.wristObj.position.set(...g.wrist);
     this.foreLocal = V(...g.fore).normalize();
   }
+  buildFreeHand() {
+    if (!HAND_ASSET || this.ghost || this.freeSet) return;
+    const model = cloneSkinned(HAND_ASSET.scene);
+    const B = {}; model.traverse(o => { if (o.name) B[o.name] = o; if (o.isMesh) { o.material = this.M.skinHand; o.castShadow = true; o.frustumCulled = false; } });
+    model.position.set(0, 0, 0); model.quaternion.identity(); model.scale.set(1, 1, 1); model.updateMatrixWorld(true);
+    const arm = B['Armature'] || model, armInvQ = arm.getWorldQuaternion(Qn()).invert();
+    const rest = {}; for (const [n, o] of Object.entries(B)) if (o.isBone) rest[n] = { p: o.getWorldPosition(V()), q: o.getWorldQuaternion(Qn()) };
+    const W = rest['wrist'].p, Mk = rest['middle-finger-phalanx-proximal'].p;
+    const y = V().subVectors(Mk, W).normalize(), x = V().subVectors(rest['index-finger-phalanx-proximal'].p, rest['pinky-finger-phalanx-proximal'].p); x.addScaledVector(y, -x.dot(y)).normalize();
+    const z = V().crossVectors(x, y);
+    const chains = { thumb: ['thumb-metacarpal', 'thumb-phalanx-proximal', 'thumb-phalanx-distal', 'thumb-tip'] };
+    for (const f of ['index', 'middle', 'ring', 'pinky']) chains[f] = ['proximal', 'intermediate', 'distal', 'tip'].map(j => `${f}-finger-${j === 'tip' ? 'tip' : 'phalanx-' + j}`);
+    const turn = (a0, b0, a1, b1, q0) => Qn().setFromUnitVectors(V().subVectors(b0, a0).normalize(), V().subVectors(b1, a1).normalize()).multiply(q0);
+    const poseFor = (curl) => { const out = {};
+      Object.entries(chains).forEach(([f, names], fi) => {
+        const c = f === 'thumb' ? curl * 0.35 : curl * (0.85 + fi * 0.08), axis = f === 'thumb' ? y : x;
+        const T = [rest[names[0]].p.clone()]; let ang = 0, q = null;
+        for (let i = 0; i < 3; i++) { ang += c; T.push(T[i].clone().add(V().subVectors(rest[names[i + 1]].p, rest[names[i]].p).applyAxisAngle(axis, ang))); }
+        for (let i = 0; i < 3; i++) { q = turn(rest[names[i]].p, rest[names[i + 1]].p, T[i], T[i + 1], rest[names[i]].q); out[names[i]] = { p: T[i], q }; }
+        out[names[3]] = { p: T[3], q };
+      }); return out; };
+    const toLocal = pose => { for (const t of Object.values(pose)) { t.p = arm.worldToLocal(t.p.clone()); t.q = armInvQ.clone().multiply(t.q); } return pose; };
+    const poses = { relaxed: toLocal(poseFor(0.5)), flat: toLocal(poseFor(0.1)) };
+    this.freeSet = name => { for (const [n, t] of Object.entries(poses[name])) { B[n].position.copy(t.p); B[n].quaternion.copy(t.q); } };
+    this.freeSet('relaxed'); this.freePoseNow = 'relaxed';
+    const Rq = Qn().setFromRotationMatrix(new THREE.Matrix4().multiplyMatrices(new THREE.Matrix4().makeBasis(V(1, 0, 0), V(0, 0, 1), V(0, -1, 0)), new THREE.Matrix4().makeBasis(x, y, z).transpose()));
+    const s = 0.094 / W.distanceTo(Mk);
+    model.quaternion.copy(Rq); model.scale.setScalar(s); model.position.copy(W.clone().multiplyScalar(-s).applyQuaternion(Rq));
+    this.freeHand.children.forEach(c => { c.visible = false; });
+    const wrap = new THREE.Group(); wrap.scale.x = -1; wrap.add(model); this.freeHand.add(wrap);
+  }
   buildMeshHand(g) {
     const model = cloneSkinned(HAND_ASSET.scene);
     const B = {}; model.traverse(o => { if (o.name) B[o.name] = o; if (o.isMesh) { o.material = this.M.skinHand; o.castShadow = true; o.frustumCulled = false; } });
@@ -1066,14 +1152,21 @@ class Player {
     const J = this.J;
     this.root.position.copy(this.base).add(P.rootOff || V());
     const { rot, crouch, lean } = P.body;
-    const hips = V(0, 0.97 - crouch * 0.5, 0);
-    const qYaw = Qn().setFromAxisAngle(UP, -rot), qt = qYaw.clone().multiply(Qn().setFromAxisAngle(V(1, 0, 0), -lean));
-    const neck = hips.clone().add(V(0, 0.46, 0).applyQuaternion(qt));
-    const shR = neck.clone().add(V(0.19, -0.05, 0).applyQuaternion(qt)), shL = neck.clone().add(V(-0.19, -0.05, 0).applyQuaternion(qt));
-    this.torso.position.copy(hips).add(V(0, 0.25, 0).applyQuaternion(qt)); this.torso.quaternion.copy(qt);
-    this.pelvis.position.copy(hips); this.pelvis.quaternion.copy(Qn().setFromAxisAngle(UP, -rot * 0.5));
-    const headP = neck.clone().add(V(0, 0.15, -0.02)); setSeg(this.neck, neck, headP); this.head.position.copy(headP);
-    this.hair.position.copy(headP).add(V(0, 0.025, 0.012));
+    const si = P.stepIn || 0;
+    const hips = V(rot * 0.06, 0.965 - crouch * 0.55, lean * 0.1 - si * 0.25);
+    const qPel = Qn().setFromAxisAngle(UP, -rot * 0.35);
+    const qLow = Qn().setFromAxisAngle(UP, -rot * 0.6).multiply(Qn().setFromAxisAngle(V(1, 0, 0), -lean * 0.5));
+    const qt = Qn().setFromAxisAngle(UP, -rot).multiply(Qn().setFromAxisAngle(V(1, 0, 0), -lean)).multiply(Qn().setFromAxisAngle(V(0, 0, 1), -rot * 0.1));
+    const mid = hips.clone().add(V(0, 0.19, 0).applyQuaternion(qLow));
+    const neck = mid.clone().add(V(0, 0.3, 0).applyQuaternion(qt));
+    const shR = mid.clone().add(V(0.185, 0.25, 0).applyQuaternion(qt)), shL = mid.clone().add(V(-0.185, 0.25, 0).applyQuaternion(qt));
+    this.abdomen.position.copy(hips); this.abdomen.quaternion.copy(qLow);
+    this.chest.position.copy(mid); this.chest.quaternion.copy(qt);
+    this.pelvis.position.copy(hips).add(V(0, -0.045, 0)); this.pelvis.quaternion.copy(qPel);
+    const headP = neck.clone().add(V(0, 0.135, 0).applyQuaternion(Qn().setFromAxisAngle(V(1, 0, 0), -lean * 0.45))); setSeg(this.neck, neck.clone().add(V(0, -0.02, 0)), headP);
+    let hy = rot * 0.25, hp = -lean * 0.25;
+    if (P.look) { const d = V().subVectors(P.look, headP); hy = clamp(Math.atan2(d.x, -d.z), -1.1, 1.1); hp = clamp(Math.atan2(d.y, Math.hypot(d.x, d.z)), -0.7, 0.35); }
+    this.headG.position.copy(headP); this.headG.quaternion.copy(Qn().setFromAxisAngle(UP, -hy).multiply(Qn().setFromAxisAngle(V(1, 0, 0), hp)));
     // racket + playing arm
     this.racket.position.copy(P.p); this.racket.quaternion.copy(P.q); this.racket.updateMatrix(); this.hand.updateMatrix(); this.wristObj.updateMatrix();
     const handM = new THREE.Matrix4().multiplyMatrices(this.racket.matrix, this.hand.matrix);
@@ -1084,12 +1177,12 @@ class Player {
     const fq = Qn().setFromRotationMatrix(handM), fdir = this.foreLocal.clone().applyQuaternion(fq);
     const guess = wrist.clone().addScaledVector(fdir, 0.28).add(V(0, -0.06, 0));
     const elbow = ik(shR, wrist, 0.31, 0.28, guess);
-    setSeg(this.uaR, shR, elbow); setSeg(this.faR, elbow, wrist);
+    setSeg(this.uaR, shR, elbow); setSeg(this.faR, elbow, wrist); setSeg(this.slR, shR, shR.clone().lerp(elbow, 0.5));
     this.shRj.position.copy(shR); this.elRj.position.copy(elbow); this.wrRj.position.copy(wrist);
     // free arm
     const free = P.free.clone();
     const elbowL = ik(shL, free, 0.30, 0.27, shL.clone().add(V(-0.3, -0.8, 0.45)));
-    setSeg(this.uaL, shL, elbowL); setSeg(this.faL, elbowL, free); this.shLj.position.copy(shL); this.elLj.position.copy(elbowL);
+    setSeg(this.uaL, shL, elbowL); setSeg(this.faL, elbowL, free); setSeg(this.slL, shL, shL.clone().lerp(elbowL, 0.5)); this.shLj.position.copy(shL); this.elLj.position.copy(elbowL);
     const fd = V().subVectors(free, elbowL).normalize();
     const hold = !!P.holding;
     let ya = hold ? V(0, -1, 0) : V(-1, 0.5, 0).normalize(); ya.addScaledVector(fd, -ya.dot(fd)); if (ya.lengthSq() < 1e-4) ya.set(0, 1, 0); ya.normalize();
@@ -1098,17 +1191,29 @@ class Player {
     const curl = hold ? 0.15 : 0.75;
     this.freeFingers.forEach(f => { f.g.rotation.x = curl * 0.8; f.g2.rotation.x = curl; });
     this.freeThumb.position.x = xa.x > 0 ? 0.04 : -0.04; this.freeThumb.rotation.set(hold ? 0.1 : 0.5, xa.x > 0 ? -0.6 : 0.6, 0);
-    // legs
-    const stance = { L: V(-0.3, 0.07, -0.1), R: V(0.3, 0.07, 0.1) };
-    for (const s of ['L', 'R']) {
-      const lg = this.legs[s], hip = hips.clone().add(V(s === 'L' ? -0.1 : 0.1, -0.04, 0).applyQuaternion(Qn().setFromAxisAngle(UP, -rot * 0.5)));
-      const ankle = stance[s].clone(); ankle.y = 0.09;
-      const knee = ik(hip, ankle, 0.45, 0.44, hip.clone().add(V(s === 'L' ? -0.15 : 0.15, -0.3, -1)));
-      setSeg(lg.th, hip, knee); setSeg(lg.sh, knee, ankle); lg.kn.position.copy(knee);
-      lg.foot.position.set(stance[s].x, 0.035, stance[s].z - 0.05); lg.foot.rotation.y = s === 'L' ? 0.25 : -0.25;
-      J['knee' + s] = knee;
+    if (this.freeSet) { const want = hold ? 'flat' : 'relaxed'; if (want !== this.freePoseNow) { this.freeSet(want); this.freePoseNow = want; } }
+    // legs: feet stay planted and step when the body moves
+    const foot = { L: V(-0.28, 0, -0.08), R: V(0.28, 0, 0.1) }, lift = { L: 0, R: 0 };
+    const st = P.step;
+    if (st) {
+      const d = this.w2lDir(V().subVectors(st.to, st.from)), cur = this.w2lDir(V().subVectors(P.rootOff, st.from)), dist = d.length();
+      if (dist > 0.04) {
+        const lead = Math.abs(d.x) > Math.abs(d.z) * 0.6 ? (d.x > 0 ? 'R' : 'L') : (d.z < 0 ? 'R' : 'L');
+        for (const s of ['L', 'R']) { const ph = clamp(s === lead ? st.u / 0.6 : (st.u - 0.4) / 0.6, 0, 1); foot[s].add(d.clone().multiplyScalar(smooth(ph)).sub(cur)); lift[s] = Math.sin(Math.PI * ph) * Math.min(0.07, dist * 0.3); }
+      }
     }
-    Object.assign(J, { hips, neck, head: headP, shR, elbow, wrist, free, feet: stance.L.clone().add(stance.R).multiplyScalar(0.5).setY(0.05) });
+    if (si > 0.005) { foot.R.z -= si; lift.R += Math.sin(Math.PI * clamp(P.stepW || 0, 0, 1)) * 0.05; }
+    for (const s of ['L', 'R']) {
+      const lg = this.legs[s], hip = hips.clone().add(V(s === 'L' ? -0.1 : 0.1, -0.05, 0).applyQuaternion(qPel));
+      const f = foot[s]; const hd = V(f.x - hip.x, 0, f.z - hip.z), hl = hd.length(); if (hl > 0.6) { hd.multiplyScalar(0.6 / hl); f.x = hip.x + hd.x; f.z = hip.z + hd.z; }
+      const ankle = V(f.x, 0.085 + lift[s], f.z + 0.03);
+      const knee = ik(hip, ankle, 0.45, 0.44, hip.clone().add(V(s === 'L' ? -0.2 : 0.2, -0.3, -1)));
+      setSeg(lg.th, hip, knee); setSeg(lg.sho, hip.clone().lerp(knee, 0.0), hip.clone().lerp(knee, 0.58)); setSeg(lg.sh, knee, ankle); lg.kn.position.copy(knee); lg.hj.position.copy(hip);
+      setSeg(lg.sock, ankle.clone().lerp(knee, -0.05), ankle.clone().lerp(knee, 0.2));
+      lg.shoe.position.set(f.x, lift[s], f.z); lg.shoe.rotation.set(-lift[s] * 5, s === 'L' ? 0.28 : -0.28, 0);
+      J['knee' + s] = knee; J['foot' + s] = f;
+    }
+    Object.assign(J, { hips, neck, head: headP, shR, elbow, wrist, free, feet: foot.L.clone().add(foot.R).multiplyScalar(0.5).setY(0.05) });
     this.bhNow = P.bh;
     this.root.updateMatrixWorld(true);
   }
@@ -1234,7 +1339,7 @@ function buildDemo(spec, env) {
     const ro = sh.rootOffset || (isL && spec.rootOffset) || S.rootOffset || [0, 0, 0];
     const baseOff = P.l2wDir(V(...ro));
     let start, tc, ballC, rootOff, prevOff = lastOff[sh.by].clone();
-    const measure = (entry) => { const pose = sampleInst(entry.inst, tc - entry.start); pose.rootOff = entry.rootOff.clone(); P.apply(pose); return P.world('racketCenter').addScaledVector(P.hitNormal(), BR + 0.006); };
+    const measure = (entry) => { const pose = sampleInst(entry.inst, tc - entry.start); pose.rootOff = entry.rootOff.clone(); if (entry.stepIn) { pose.stepIn = entry.stepIn; pose.stepW = 1; } P.apply(pose); return P.world('racketCenter').addScaledVector(P.hitNormal(), BR + 0.006); };
     let entry;
     if (i === 0) {
       start = 0.3; rootOff = baseOff.clone(); prevOff = baseOff.clone(); tc = start + inst.tc;
@@ -1263,16 +1368,16 @@ function buildDemo(spec, env) {
       rootOff = baseOff.clone().add(shift);
       const remL = P.w2lDir(V().subVectors(delta, shift));
       shiftKeys(inst, remL);
-      if (remL.z < -0.02) inst.keys.forEach(k => { k.body.lean += Math.min(0.45, -remL.z * 1.1); });
+      if (remL.z < -0.02) { inst.stepIn0 = Math.min(0.42, -remL.z); inst.keys.forEach(k => { k.body.lean += Math.min(0.3, -remL.z * 0.6); }); }
       samples = samples.filter(s => s.t < tc); events = events.filter(e => e.t < tc);
-      entry = { inst, start, end: start + inst.dur, rootOff, prevOff };
-      for (let it = 0; it < 5; it++) {
+      entry = { inst, start, end: start + inst.dur, rootOff, prevOff, stepIn: inst.stepIn0 || 0 };
+      for (let it = 0; it < 8; it++) {
         const d = V().subVectors(ballC, measure(entry)); if (d.length() < 0.006) break;
         const ro = entry.rootOff, nz = ro.z + d.z; let rz = nz;
         if (isL && P.base.z + rz < 1.42) rz = 1.42 - P.base.z; if (!isL && P.base.z + rz > -1.42) rz = -1.42 - P.base.z;
         ro.x += d.x; ro.z = rz;
         const resid = nz - rz;
-        if (Math.abs(resid) > 0.004) { shiftKeys(inst, P.w2lDir(V(0, 0, resid))); inst.keys.forEach(k => { k.body.lean = Math.min(0.95, k.body.lean + Math.abs(resid) * 1.2); }); }
+        if (Math.abs(resid) > 0.004) { shiftKeys(inst, P.w2lDir(V(0, 0, resid))); entry.stepIn = Math.min(0.42, (entry.stepIn || 0) + Math.abs(resid)); inst.keys.forEach(k => { k.body.lean = Math.min(0.8, k.body.lean + Math.abs(resid) * 0.6); }); }
         if (Math.abs(d.y) > 0.004) shiftKeys(inst, V(0, d.y, 0));
       }
     }
@@ -1367,7 +1472,7 @@ class Stage {
     this.O.setGrip('shakeNeutral', false);
     try {
       const bin = Uint8Array.from(atob(HAND_GLB_B64), c => c.charCodeAt(0)).buffer;
-      new GLTFLoader().parse(bin, '', gltf => { HAND_ASSET = gltf; for (const P of [this.L, this.O]) { const id = P.gripId; P.gripId = null; P.setGrip(id || 'shakeNeutral', false); } if (this.demo) this.apply(this.t); }, err => console.warn('hand model', err));
+      new GLTFLoader().parse(bin, '', gltf => { HAND_ASSET = gltf; for (const P of [this.L, this.O]) { const id = P.gripId; P.gripId = null; P.setGrip(id || 'shakeNeutral', false); P.buildFreeHand(); } if (this.demo) this.apply(this.t); }, err => console.warn('hand model', err));
     } catch (err) { console.warn('hand model', err); }
     this.texStripe = ballTexture(true); this.texPlain = ballTexture(false);
     this.ballMat = new THREE.MeshStandardMaterial({ map: this.texStripe, roughness: 0.45 });
@@ -1432,7 +1537,8 @@ class Stage {
   }
   resize() {
     const w = this.el.clientWidth, h = this.el.clientHeight; if (!w || !h) return;
-    this.renderer.setSize(w, h, false); this.camera.aspect = w / h; this.camera.updateProjectionMatrix();
+    this.renderer.setSize(w, h, false); this.camera.aspect = w / h;
+    this.camera.fov = clamp(2 * Math.atan(Math.tan(24 * D2R) / (w / h)) / D2R, 45, 80); this.camera.updateProjectionMatrix();
   }
   configure({ lefty, grip, highlight, swapRubber }) {
     this.lefty = lefty;
@@ -1532,9 +1638,9 @@ class Stage {
         tgt = c; pos = c.clone().addScaledVector(side, 0.8).add(V(0, 0.16, -0.08));
         this.apply(save); break;
       }
-      default: pos = V(0.45 * sx, 2.0, 4.1); tgt = V(0, 0.85, 0.35); name = 'behind';
+      default: pos = V(0.55 * sx, 2.25, 5.0); tgt = V(0, 0.85, 0.6); name = 'behind';
     }
-    L.head.visible = L.hair.visible = L.neck.visible = name !== 'eyes';
+    L.headG.visible = L.neck.visible = name !== 'eyes';
     this.camState = { name, pos, tgt, track, anchor0: track ? this.trackPoint(track) : null, t0: performance.now(), dur: instant ? 0 : 700, from: { pos: this.camera.position.clone(), tgt: this.controls.target.clone() }, lastTrack: null };
     this.hooks.onCamera?.(name);
   }
@@ -1556,9 +1662,10 @@ class Stage {
   }
   apply(t) {
     const D = this.demo; if (!D) return;
-    this.L.apply(poseAt(D.tl.learner, t)); this.O.apply(poseAt(D.tl.opponent, t));
-    if (this.ghostDemo) this.Gh.apply(poseAt(this.ghostDemo.tl.learner, t));
     const s = sampleBall(D.samples, t);
+    const withLook = (P, pose) => { if (s && !s.hidden) pose.look = P.w2l(s.p, pose.rootOff); return pose; };
+    this.L.apply(withLook(this.L, poseAt(D.tl.learner, t))); this.O.apply(withLook(this.O, poseAt(D.tl.opponent, t)));
+    if (this.ghostDemo) this.Gh.apply(poseAt(this.ghostDemo.tl.learner, t));
     if (!s || s.hidden) { this.ball.visible = false; this.curBall = null; }
     else { this.ball.visible = true; this.ball.position.copy(s.p); this.ball.quaternion.copy(s.q); this.curBall = s; }
     // free-hand ball while holding: keep ball on palm for learner serve pre-toss
@@ -1599,10 +1706,22 @@ class Stage {
     };
     if (pr) { this.protLabel.textContent = pr.text; proj(pr.pos, this.protLabel); } else if (this.protLabel) this.protLabel.style.display = 'none';
     if (this.tossLabel) { if (this.tossMark && O.has('toss')) proj(D.toss.p.clone().add(V(0.04, 0.17, 0)), this.tossLabel); else this.tossLabel.style.display = 'none'; }
-    const showLabels = O.has('labels');
+    const showLabels = O.has('labels'); const shown = [];
     for (const c of this.callouts) {
       if (!showLabels || (c.target === 'ball' && !this.ball.visible)) { c.el.style.display = 'none'; continue; }
-      proj(this.anchor(c.target), c.el);
+      const v = this.anchor(c.target).project(this.camera);
+      if (!(v.z < 1 && v.z > -1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1)) { c.el.style.display = 'none'; continue; }
+      c.x = (v.x * 0.5 + 0.5) * W; c.y = (-v.y * 0.5 + 0.5) * H; if (!c.w) { c.el.style.display = ''; c.w = c.el.querySelector('.txt').offsetWidth || 0; } shown.push(c);
+    }
+    // keep labels on screen and apart: flip to the left near the right edge, then spread vertically
+    shown.sort((a, b) => a.y - b.y); const placed = [];
+    for (const c of shown) {
+      const x0 = clamp(c.x + 6, 4, Math.max(4, W - c.w - 6));
+      let ty = Math.max(44, c.y - 26);
+      for (const p of placed) if (x0 < p.x1 + 4 && x0 + c.w > p.x0 - 4 && ty < p.y + 24 && ty > p.y - 24) ty = p.y + 24;
+      placed.push({ x0, x1: x0 + c.w, y: ty });
+      c.el.style.display = ''; c.el.style.transform = `translate(${c.x}px, ${c.y}px)`;
+      c.el.style.setProperty('--dy', (ty - c.y) + 'px'); c.el.style.setProperty('--dx', (x0 - c.x) + 'px');
     }
   }
   hud() {
@@ -1707,6 +1826,13 @@ document.querySelector('.tabs').onclick = e => { const b = e.target.closest('but
 $('#camBar').innerHTML = Object.entries(CAMERAS).map(([k, v]) => `<button class="chip" data-cam="${k}">${esc(v)}</button>`).join('');
 $('#camBar').onclick = e => { const c = e.target.closest('[data-cam]'); if (c) { stage.controls.autoRotate = false; stage.setCamera(c.dataset.cam); } };
 $('#layersBtn').onclick = () => $('#layers').classList.toggle('open');
+$('#bigBtn').onclick = () => { const on = document.body.classList.toggle('big'); $('#bigBtn').textContent = on ? '⤡' : '⤢'; $('#bigBtn').setAttribute('aria-label', on ? 'Shrink 3D view' : 'Expand 3D view'); };
+$('#setBtn').onclick = e => { e.stopPropagation(); const on = $('#settings').classList.toggle('open'); $('#setBtn').setAttribute('aria-expanded', on); };
+document.addEventListener('pointerdown', e => {
+  if (!e.target.closest('#settings, #setBtn')) $('#settings').classList.remove('open');
+  if (!e.target.closest('#layers, #layersBtn')) $('#layers').classList.remove('open');
+});
+$('#speedCycle').onclick = () => { stage.speed = SPEEDS[(SPEEDS.indexOf(stage.speed) + 1) % SPEEDS.length]; syncPlay(); };
 function renderLayers() {
   $('#layers').innerHTML = '<div class="muted" style="font-size:12px;padding:0 4px 4px">Show</div>' + Object.entries(OVERLAYS).map(([k, v]) => `<label><input type="checkbox" data-k="${k}" ${stage.overlays.has(k) ? 'checked' : ''}> ${esc(v)}</label>`).join('');
 }
@@ -1718,6 +1844,7 @@ function syncPlay() {
   $('#playBtn').textContent = stage.playing ? '⏸' : '▶';
   document.querySelectorAll('#speeds .btn').forEach(b => b.classList.toggle('on', +b.dataset.s === stage.speed));
   $('#loopBtn').classList.toggle('on', stage.loop);
+  $('#speedCycle').textContent = stage.speed + '×';
   $('#contactBtn').disabled = !(stage.demo && stage.demo.tMain != null);
 }
 function togglePlay() { if (!stage.playing && stage.demo && stage.t >= stage.demo.duration - 0.01) { stage.t = 0; stage.paused1 = false; } stage.playing = !stage.playing; syncPlay(); }
@@ -1760,7 +1887,8 @@ function selectItem(i) {
 function renderLesson() {
   const L = lessonById(state.lessonId), m = MODULES.find(x => x.id === L.m);
   const idx = LESSONS.indexOf(L), next = LESSONS[idx + 1];
-  let h = `<div class="muted">${esc(m.name)} · Lesson ${idx + 1} of ${LESSONS.length}</div><h2>${esc(L.title)}</h2><p class="why">${esc(L.why)}</p>`;
+  const prev = LESSONS[idx - 1];
+  let h = `<div class="row lessonNav"><span class="muted">${esc(m.name)} · Lesson ${idx + 1} of ${LESSONS.length}</span><span class="sp"></span><button class="btn" id="prevTop" aria-label="Previous lesson" ${prev ? '' : 'disabled'}>‹</button><button class="btn" id="nextTop" aria-label="Next lesson" ${next ? '' : 'disabled'}>›</button></div><h2>${esc(L.title)}</h2><p class="why">${esc(L.why)}</p>`;
   h += `<h3>What to look for</h3><ol class="keys">${L.keys.map(k => `<li>${esc(k)}</li>`).join('')}</ol>`;
   if (L.matrix) h += renderMatrix();
   if (L.items.length) {
@@ -1787,7 +1915,8 @@ function renderLesson() {
     });
   });
   $('#doneBtn').onclick = () => { state.done[L.id] = !state.done[L.id]; save(); renderNav(); renderLesson(); };
-  if (next) $('#nextBtn').onclick = () => openLesson(next.id);
+  if (next) $('#nextBtn').onclick = $('#nextTop').onclick = () => openLesson(next.id);
+  if (prev) $('#prevTop').onclick = () => openLesson(prev.id);
   $('#askThis').onclick = () => { askContext = { lessonId: L.id, label: L.title + (curItem != null ? ' — ' + L.items[curItem].label : '') }; showTab('ask'); renderAsk(); $('#askInput')?.focus(); };
   T.querySelectorAll('[data-cell]').forEach(b => b.onclick = () => selectCell(b.dataset.cell));
 }

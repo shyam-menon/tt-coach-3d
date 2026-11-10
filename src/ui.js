@@ -93,6 +93,13 @@ document.querySelector('.tabs').onclick = e => { const b = e.target.closest('but
 $('#camBar').innerHTML = Object.entries(CAMERAS).map(([k, v]) => `<button class="chip" data-cam="${k}">${esc(v)}</button>`).join('');
 $('#camBar').onclick = e => { const c = e.target.closest('[data-cam]'); if (c) { stage.controls.autoRotate = false; stage.setCamera(c.dataset.cam); } };
 $('#layersBtn').onclick = () => $('#layers').classList.toggle('open');
+$('#bigBtn').onclick = () => { const on = document.body.classList.toggle('big'); $('#bigBtn').textContent = on ? '⤡' : '⤢'; $('#bigBtn').setAttribute('aria-label', on ? 'Shrink 3D view' : 'Expand 3D view'); };
+$('#setBtn').onclick = e => { e.stopPropagation(); const on = $('#settings').classList.toggle('open'); $('#setBtn').setAttribute('aria-expanded', on); };
+document.addEventListener('pointerdown', e => {
+  if (!e.target.closest('#settings, #setBtn')) $('#settings').classList.remove('open');
+  if (!e.target.closest('#layers, #layersBtn')) $('#layers').classList.remove('open');
+});
+$('#speedCycle').onclick = () => { stage.speed = SPEEDS[(SPEEDS.indexOf(stage.speed) + 1) % SPEEDS.length]; syncPlay(); };
 function renderLayers() {
   $('#layers').innerHTML = '<div class="muted" style="font-size:12px;padding:0 4px 4px">Show</div>' + Object.entries(OVERLAYS).map(([k, v]) => `<label><input type="checkbox" data-k="${k}" ${stage.overlays.has(k) ? 'checked' : ''}> ${esc(v)}</label>`).join('');
 }
@@ -104,6 +111,7 @@ function syncPlay() {
   $('#playBtn').textContent = stage.playing ? '⏸' : '▶';
   document.querySelectorAll('#speeds .btn').forEach(b => b.classList.toggle('on', +b.dataset.s === stage.speed));
   $('#loopBtn').classList.toggle('on', stage.loop);
+  $('#speedCycle').textContent = stage.speed + '×';
   $('#contactBtn').disabled = !(stage.demo && stage.demo.tMain != null);
 }
 function togglePlay() { if (!stage.playing && stage.demo && stage.t >= stage.demo.duration - 0.01) { stage.t = 0; stage.paused1 = false; } stage.playing = !stage.playing; syncPlay(); }
@@ -146,7 +154,8 @@ function selectItem(i) {
 function renderLesson() {
   const L = lessonById(state.lessonId), m = MODULES.find(x => x.id === L.m);
   const idx = LESSONS.indexOf(L), next = LESSONS[idx + 1];
-  let h = `<div class="muted">${esc(m.name)} · Lesson ${idx + 1} of ${LESSONS.length}</div><h2>${esc(L.title)}</h2><p class="why">${esc(L.why)}</p>`;
+  const prev = LESSONS[idx - 1];
+  let h = `<div class="row lessonNav"><span class="muted">${esc(m.name)} · Lesson ${idx + 1} of ${LESSONS.length}</span><span class="sp"></span><button class="btn" id="prevTop" aria-label="Previous lesson" ${prev ? '' : 'disabled'}>‹</button><button class="btn" id="nextTop" aria-label="Next lesson" ${next ? '' : 'disabled'}>›</button></div><h2>${esc(L.title)}</h2><p class="why">${esc(L.why)}</p>`;
   h += `<h3>What to look for</h3><ol class="keys">${L.keys.map(k => `<li>${esc(k)}</li>`).join('')}</ol>`;
   if (L.matrix) h += renderMatrix();
   if (L.items.length) {
@@ -173,7 +182,8 @@ function renderLesson() {
     });
   });
   $('#doneBtn').onclick = () => { state.done[L.id] = !state.done[L.id]; save(); renderNav(); renderLesson(); };
-  if (next) $('#nextBtn').onclick = () => openLesson(next.id);
+  if (next) $('#nextBtn').onclick = $('#nextTop').onclick = () => openLesson(next.id);
+  if (prev) $('#prevTop').onclick = () => openLesson(prev.id);
   $('#askThis').onclick = () => { askContext = { lessonId: L.id, label: L.title + (curItem != null ? ' — ' + L.items[curItem].label : '') }; showTab('ask'); renderAsk(); $('#askInput')?.focus(); };
   T.querySelectorAll('[data-cell]').forEach(b => b.onclick = () => selectCell(b.dataset.cell));
 }

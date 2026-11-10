@@ -151,7 +151,10 @@ function poseAt(entries, t) {
     if (t >= e.start && t <= e.end) {
       const tau = t - e.start, p = sampleInst(e.inst, e.inst.static ? tau % e.inst.dur : tau);
       const ramp = e.inst.tc ? Math.max(0.2, e.inst.tc * 0.9) : 0.3;
-      p.rootOff = e.prevOff.clone().lerp(e.rootOff, smooth(tau / ramp)); p.inst = e.inst; p.tau = tau; return p;
+      p.rootOff = e.prevOff.clone().lerp(e.rootOff, smooth(tau / ramp)); p.inst = e.inst; p.tau = tau;
+      p.step = { from: e.prevOff, to: e.rootOff, u: clamp(tau / ramp, 0, 1) };
+      if (e.stepIn) { const tcE = (e.inst.tc || 0) + 0.12, w = smooth(tau / ramp) * (tau > tcE ? 1 - smooth((tau - tcE) / Math.max(0.2, e.inst.dur - tcE)) : 1); p.stepIn = e.stepIn * w; p.stepW = w; }
+      return p;
     }
     if (nx && t > e.end && t < nx.start) {
       const p = blendPose(sampleInst(e.inst, e.inst.dur), sampleInst(nx.inst, 0), smooth((t - e.end) / (nx.start - e.end)));
@@ -193,15 +196,26 @@ class Player {
     const add = (m, parent = this.body) => { m.castShadow = cast; parent.add(m); return m; };
     const cyl = (r1, r2, m, parent) => add(new THREE.Mesh(new THREE.CylinderGeometry(r2, r1, 1, 16), m), parent);
     const sph = (r, m, parent) => add(new THREE.Mesh(new THREE.SphereGeometry(r, 20, 14), m), parent);
-    this.torso = add(new THREE.Mesh(new THREE.CapsuleGeometry(0.14, 0.24, 8, 18), this.M.shirt)); this.torso.scale.set(1.3, 1, 0.72);
-    this.pelvis = sph(0.13, this.M.shorts); this.pelvis.scale.set(1.25, 0.75, 0.85);
-    this.neck = cyl(0.045, 0.045, this.M.skin); this.head = sph(0.1, this.M.skin);
-    this.hair = sph(0.103, ghost ? gm : stdMat(0x2a2018)); this.hair.scale.set(1, 0.75, 1);
+    const lathe = (pts, sz, m) => { const g = new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0], p[1])), 28); g.scale(1, 1, sz); g.computeVertexNormals(); return add(new THREE.Mesh(g, m)); };
+    this.chest = lathe([[0.001, -0.03], [0.128, -0.03], [0.14, 0.02], [0.158, 0.1], [0.172, 0.19], [0.176, 0.235], [0.152, 0.275], [0.075, 0.298], [0.05, 0.315], [0.001, 0.315]], 0.62, this.M.shirt);
+    this.abdomen = lathe([[0.001, -0.05], [0.15, -0.05], [0.152, -0.02], [0.145, 0.08], [0.139, 0.2], [0.001, 0.2]], 0.76, this.M.shirt);
+    this.pelvis = sph(0.13, this.M.shorts); this.pelvis.scale.set(1.42, 0.9, 0.84);
+    this.neck = cyl(0.044, 0.04, this.M.skin);
+    this.headG = new THREE.Group(); this.body.add(this.headG);
+    const hairM = ghost ? gm : stdMat(0x1d1612, { roughness: 0.9 }), darkM = ghost ? gm : stdMat(0x15100c);
+    this.head = sph(1, this.M.skin, this.headG); this.head.scale.set(0.088, 0.108, 0.098);
+    this.hair = add(new THREE.Mesh(new THREE.SphereGeometry(1, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.52), hairM), this.headG); this.hair.scale.set(0.093, 0.106, 0.104); this.hair.position.set(0, 0.012, 0.008); this.hair.rotation.x = 0.45;
+    for (const sx of [-1, 1]) {
+      const ear = sph(0.018, this.M.skin, this.headG); ear.position.set(sx * 0.088, -0.005, 0.008); ear.scale.set(0.5, 1, 0.8);
+      const eye = sph(0.0105, darkM, this.headG); eye.position.set(sx * 0.034, 0.014, -0.088);
+      const brow = add(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.006, 0.008), hairM), this.headG); brow.position.set(sx * 0.034, 0.034, -0.09);
+    }
+    const nose = sph(0.014, this.M.skin, this.headG); nose.position.set(0, -0.012, -0.099); nose.scale.set(0.8, 1.2, 1);
     this.arm = new THREE.Group(); R.add(this.arm);
-    this.uaR = cyl(0.047, 0.04, this.M.skin, this.arm); this.faR = cyl(0.039, 0.031, this.M.skin, this.arm);
-    this.shRj = sph(0.055, this.M.sleeve, this.arm); this.elRj = sph(0.04, this.M.skin, this.arm); this.wrRj = sph(0.027, this.M.skin, this.arm);
-    this.uaL = cyl(0.047, 0.04, this.M.skin); this.faL = cyl(0.039, 0.03, this.M.skin);
-    this.shLj = sph(0.055, this.M.sleeve); this.elLj = sph(0.04, this.M.skin);
+    this.uaR = cyl(0.046, 0.039, this.M.skin, this.arm); this.faR = cyl(0.041, 0.027, this.M.skin, this.arm); this.slR = cyl(0.057, 0.051, this.M.sleeve, this.arm);
+    this.shRj = sph(0.058, this.M.sleeve, this.arm); this.elRj = sph(0.04, this.M.skin, this.arm); this.wrRj = sph(0.027, this.M.skin, this.arm);
+    this.uaL = cyl(0.046, 0.039, this.M.skin); this.faL = cyl(0.041, 0.029, this.M.skin); this.slL = cyl(0.057, 0.051, this.M.sleeve);
+    this.shLj = sph(0.058, this.M.sleeve); this.elLj = sph(0.04, this.M.skin);
     this.freeHand = new THREE.Group(); this.body.add(this.freeHand);
     // free (left) hand: rounded palm + curled fingers; local z = toward fingertips, y = back of hand
     const fh = this.freeHand, M = this.M.skin;
@@ -219,9 +233,13 @@ class Player {
     this.freeThumb = new THREE.Group(); this.freeThumb.position.set(0.04, -0.008, 0.03); fh.add(this.freeThumb);
     const th = capsule(0.0095, 0.045); th.rotation.x = Math.PI / 2; th.position.z = 0.03; fh.remove(th); this.freeThumb.add(th);
     this.legs = {};
+    const soleM = ghost ? gm : stdMat(0x2b2f36), sockM = ghost ? gm : stdMat(0xf4f4f4), trimM = ghost ? gm : stdMat(shirt);
     for (const s of ['L', 'R']) {
-      this.legs[s] = { th: cyl(0.072, 0.054, this.M.shorts), sh: cyl(0.052, 0.04, this.M.skin), kn: sph(0.055, this.M.skin),
-        foot: add(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.06, 0.26), this.M.shoe)) };
+      const shoe = new THREE.Group(); this.body.add(shoe);
+      const upper = add(new THREE.Mesh(new THREE.CapsuleGeometry(0.046, 0.15, 6, 14), this.M.shoe), shoe); upper.rotation.x = Math.PI / 2; upper.scale.set(1, 1, 0.82); upper.position.set(0, 0.05, -0.045);
+      const sole = add(new THREE.Mesh(new THREE.CapsuleGeometry(0.048, 0.155, 4, 14), soleM), shoe); sole.rotation.x = Math.PI / 2; sole.scale.set(1, 1, 0.3); sole.position.set(0, 0.014, -0.045);
+      const trim = add(new THREE.Mesh(new THREE.BoxGeometry(0.094, 0.012, 0.09), trimM), shoe); trim.position.set(0, 0.058, -0.03);
+      this.legs[s] = { th: cyl(0.078, 0.056, this.M.skin), sho: cyl(0.092, 0.084, this.M.shorts), sh: cyl(0.054, 0.037, this.M.skin), kn: sph(0.055, this.M.skin), sock: cyl(0.041, 0.043, sockM), hj: sph(0.091, this.M.shorts), shoe };
     }
     // racket
     this.racket = new THREE.Group(); R.add(this.racket);
@@ -278,6 +296,37 @@ class Player {
     this.wristObj.position.set(...g.wrist);
     this.foreLocal = V(...g.fore).normalize();
   }
+  buildFreeHand() {
+    if (!HAND_ASSET || this.ghost || this.freeSet) return;
+    const model = cloneSkinned(HAND_ASSET.scene);
+    const B = {}; model.traverse(o => { if (o.name) B[o.name] = o; if (o.isMesh) { o.material = this.M.skinHand; o.castShadow = true; o.frustumCulled = false; } });
+    model.position.set(0, 0, 0); model.quaternion.identity(); model.scale.set(1, 1, 1); model.updateMatrixWorld(true);
+    const arm = B['Armature'] || model, armInvQ = arm.getWorldQuaternion(Qn()).invert();
+    const rest = {}; for (const [n, o] of Object.entries(B)) if (o.isBone) rest[n] = { p: o.getWorldPosition(V()), q: o.getWorldQuaternion(Qn()) };
+    const W = rest['wrist'].p, Mk = rest['middle-finger-phalanx-proximal'].p;
+    const y = V().subVectors(Mk, W).normalize(), x = V().subVectors(rest['index-finger-phalanx-proximal'].p, rest['pinky-finger-phalanx-proximal'].p); x.addScaledVector(y, -x.dot(y)).normalize();
+    const z = V().crossVectors(x, y);
+    const chains = { thumb: ['thumb-metacarpal', 'thumb-phalanx-proximal', 'thumb-phalanx-distal', 'thumb-tip'] };
+    for (const f of ['index', 'middle', 'ring', 'pinky']) chains[f] = ['proximal', 'intermediate', 'distal', 'tip'].map(j => `${f}-finger-${j === 'tip' ? 'tip' : 'phalanx-' + j}`);
+    const turn = (a0, b0, a1, b1, q0) => Qn().setFromUnitVectors(V().subVectors(b0, a0).normalize(), V().subVectors(b1, a1).normalize()).multiply(q0);
+    const poseFor = (curl) => { const out = {};
+      Object.entries(chains).forEach(([f, names], fi) => {
+        const c = f === 'thumb' ? curl * 0.35 : curl * (0.85 + fi * 0.08), axis = f === 'thumb' ? y : x;
+        const T = [rest[names[0]].p.clone()]; let ang = 0, q = null;
+        for (let i = 0; i < 3; i++) { ang += c; T.push(T[i].clone().add(V().subVectors(rest[names[i + 1]].p, rest[names[i]].p).applyAxisAngle(axis, ang))); }
+        for (let i = 0; i < 3; i++) { q = turn(rest[names[i]].p, rest[names[i + 1]].p, T[i], T[i + 1], rest[names[i]].q); out[names[i]] = { p: T[i], q }; }
+        out[names[3]] = { p: T[3], q };
+      }); return out; };
+    const toLocal = pose => { for (const t of Object.values(pose)) { t.p = arm.worldToLocal(t.p.clone()); t.q = armInvQ.clone().multiply(t.q); } return pose; };
+    const poses = { relaxed: toLocal(poseFor(0.5)), flat: toLocal(poseFor(0.1)) };
+    this.freeSet = name => { for (const [n, t] of Object.entries(poses[name])) { B[n].position.copy(t.p); B[n].quaternion.copy(t.q); } };
+    this.freeSet('relaxed'); this.freePoseNow = 'relaxed';
+    const Rq = Qn().setFromRotationMatrix(new THREE.Matrix4().multiplyMatrices(new THREE.Matrix4().makeBasis(V(1, 0, 0), V(0, 0, 1), V(0, -1, 0)), new THREE.Matrix4().makeBasis(x, y, z).transpose()));
+    const s = 0.094 / W.distanceTo(Mk);
+    model.quaternion.copy(Rq); model.scale.setScalar(s); model.position.copy(W.clone().multiplyScalar(-s).applyQuaternion(Rq));
+    this.freeHand.children.forEach(c => { c.visible = false; });
+    const wrap = new THREE.Group(); wrap.scale.x = -1; wrap.add(model); this.freeHand.add(wrap);
+  }
   buildMeshHand(g) {
     const model = cloneSkinned(HAND_ASSET.scene);
     const B = {}; model.traverse(o => { if (o.name) B[o.name] = o; if (o.isMesh) { o.material = this.M.skinHand; o.castShadow = true; o.frustumCulled = false; } });
@@ -316,14 +365,21 @@ class Player {
     const J = this.J;
     this.root.position.copy(this.base).add(P.rootOff || V());
     const { rot, crouch, lean } = P.body;
-    const hips = V(0, 0.97 - crouch * 0.5, 0);
-    const qYaw = Qn().setFromAxisAngle(UP, -rot), qt = qYaw.clone().multiply(Qn().setFromAxisAngle(V(1, 0, 0), -lean));
-    const neck = hips.clone().add(V(0, 0.46, 0).applyQuaternion(qt));
-    const shR = neck.clone().add(V(0.19, -0.05, 0).applyQuaternion(qt)), shL = neck.clone().add(V(-0.19, -0.05, 0).applyQuaternion(qt));
-    this.torso.position.copy(hips).add(V(0, 0.25, 0).applyQuaternion(qt)); this.torso.quaternion.copy(qt);
-    this.pelvis.position.copy(hips); this.pelvis.quaternion.copy(Qn().setFromAxisAngle(UP, -rot * 0.5));
-    const headP = neck.clone().add(V(0, 0.15, -0.02)); setSeg(this.neck, neck, headP); this.head.position.copy(headP);
-    this.hair.position.copy(headP).add(V(0, 0.025, 0.012));
+    const si = P.stepIn || 0;
+    const hips = V(rot * 0.06, 0.965 - crouch * 0.55, lean * 0.1 - si * 0.25);
+    const qPel = Qn().setFromAxisAngle(UP, -rot * 0.35);
+    const qLow = Qn().setFromAxisAngle(UP, -rot * 0.6).multiply(Qn().setFromAxisAngle(V(1, 0, 0), -lean * 0.5));
+    const qt = Qn().setFromAxisAngle(UP, -rot).multiply(Qn().setFromAxisAngle(V(1, 0, 0), -lean)).multiply(Qn().setFromAxisAngle(V(0, 0, 1), -rot * 0.1));
+    const mid = hips.clone().add(V(0, 0.19, 0).applyQuaternion(qLow));
+    const neck = mid.clone().add(V(0, 0.3, 0).applyQuaternion(qt));
+    const shR = mid.clone().add(V(0.185, 0.25, 0).applyQuaternion(qt)), shL = mid.clone().add(V(-0.185, 0.25, 0).applyQuaternion(qt));
+    this.abdomen.position.copy(hips); this.abdomen.quaternion.copy(qLow);
+    this.chest.position.copy(mid); this.chest.quaternion.copy(qt);
+    this.pelvis.position.copy(hips).add(V(0, -0.045, 0)); this.pelvis.quaternion.copy(qPel);
+    const headP = neck.clone().add(V(0, 0.135, 0).applyQuaternion(Qn().setFromAxisAngle(V(1, 0, 0), -lean * 0.45))); setSeg(this.neck, neck.clone().add(V(0, -0.02, 0)), headP);
+    let hy = rot * 0.25, hp = -lean * 0.25;
+    if (P.look) { const d = V().subVectors(P.look, headP); hy = clamp(Math.atan2(d.x, -d.z), -1.1, 1.1); hp = clamp(Math.atan2(d.y, Math.hypot(d.x, d.z)), -0.7, 0.35); }
+    this.headG.position.copy(headP); this.headG.quaternion.copy(Qn().setFromAxisAngle(UP, -hy).multiply(Qn().setFromAxisAngle(V(1, 0, 0), hp)));
     // racket + playing arm
     this.racket.position.copy(P.p); this.racket.quaternion.copy(P.q); this.racket.updateMatrix(); this.hand.updateMatrix(); this.wristObj.updateMatrix();
     const handM = new THREE.Matrix4().multiplyMatrices(this.racket.matrix, this.hand.matrix);
@@ -334,12 +390,12 @@ class Player {
     const fq = Qn().setFromRotationMatrix(handM), fdir = this.foreLocal.clone().applyQuaternion(fq);
     const guess = wrist.clone().addScaledVector(fdir, 0.28).add(V(0, -0.06, 0));
     const elbow = ik(shR, wrist, 0.31, 0.28, guess);
-    setSeg(this.uaR, shR, elbow); setSeg(this.faR, elbow, wrist);
+    setSeg(this.uaR, shR, elbow); setSeg(this.faR, elbow, wrist); setSeg(this.slR, shR, shR.clone().lerp(elbow, 0.5));
     this.shRj.position.copy(shR); this.elRj.position.copy(elbow); this.wrRj.position.copy(wrist);
     // free arm
     const free = P.free.clone();
     const elbowL = ik(shL, free, 0.30, 0.27, shL.clone().add(V(-0.3, -0.8, 0.45)));
-    setSeg(this.uaL, shL, elbowL); setSeg(this.faL, elbowL, free); this.shLj.position.copy(shL); this.elLj.position.copy(elbowL);
+    setSeg(this.uaL, shL, elbowL); setSeg(this.faL, elbowL, free); setSeg(this.slL, shL, shL.clone().lerp(elbowL, 0.5)); this.shLj.position.copy(shL); this.elLj.position.copy(elbowL);
     const fd = V().subVectors(free, elbowL).normalize();
     const hold = !!P.holding;
     let ya = hold ? V(0, -1, 0) : V(-1, 0.5, 0).normalize(); ya.addScaledVector(fd, -ya.dot(fd)); if (ya.lengthSq() < 1e-4) ya.set(0, 1, 0); ya.normalize();
@@ -348,17 +404,29 @@ class Player {
     const curl = hold ? 0.15 : 0.75;
     this.freeFingers.forEach(f => { f.g.rotation.x = curl * 0.8; f.g2.rotation.x = curl; });
     this.freeThumb.position.x = xa.x > 0 ? 0.04 : -0.04; this.freeThumb.rotation.set(hold ? 0.1 : 0.5, xa.x > 0 ? -0.6 : 0.6, 0);
-    // legs
-    const stance = { L: V(-0.3, 0.07, -0.1), R: V(0.3, 0.07, 0.1) };
-    for (const s of ['L', 'R']) {
-      const lg = this.legs[s], hip = hips.clone().add(V(s === 'L' ? -0.1 : 0.1, -0.04, 0).applyQuaternion(Qn().setFromAxisAngle(UP, -rot * 0.5)));
-      const ankle = stance[s].clone(); ankle.y = 0.09;
-      const knee = ik(hip, ankle, 0.45, 0.44, hip.clone().add(V(s === 'L' ? -0.15 : 0.15, -0.3, -1)));
-      setSeg(lg.th, hip, knee); setSeg(lg.sh, knee, ankle); lg.kn.position.copy(knee);
-      lg.foot.position.set(stance[s].x, 0.035, stance[s].z - 0.05); lg.foot.rotation.y = s === 'L' ? 0.25 : -0.25;
-      J['knee' + s] = knee;
+    if (this.freeSet) { const want = hold ? 'flat' : 'relaxed'; if (want !== this.freePoseNow) { this.freeSet(want); this.freePoseNow = want; } }
+    // legs: feet stay planted and step when the body moves
+    const foot = { L: V(-0.28, 0, -0.08), R: V(0.28, 0, 0.1) }, lift = { L: 0, R: 0 };
+    const st = P.step;
+    if (st) {
+      const d = this.w2lDir(V().subVectors(st.to, st.from)), cur = this.w2lDir(V().subVectors(P.rootOff, st.from)), dist = d.length();
+      if (dist > 0.04) {
+        const lead = Math.abs(d.x) > Math.abs(d.z) * 0.6 ? (d.x > 0 ? 'R' : 'L') : (d.z < 0 ? 'R' : 'L');
+        for (const s of ['L', 'R']) { const ph = clamp(s === lead ? st.u / 0.6 : (st.u - 0.4) / 0.6, 0, 1); foot[s].add(d.clone().multiplyScalar(smooth(ph)).sub(cur)); lift[s] = Math.sin(Math.PI * ph) * Math.min(0.07, dist * 0.3); }
+      }
     }
-    Object.assign(J, { hips, neck, head: headP, shR, elbow, wrist, free, feet: stance.L.clone().add(stance.R).multiplyScalar(0.5).setY(0.05) });
+    if (si > 0.005) { foot.R.z -= si; lift.R += Math.sin(Math.PI * clamp(P.stepW || 0, 0, 1)) * 0.05; }
+    for (const s of ['L', 'R']) {
+      const lg = this.legs[s], hip = hips.clone().add(V(s === 'L' ? -0.1 : 0.1, -0.05, 0).applyQuaternion(qPel));
+      const f = foot[s]; const hd = V(f.x - hip.x, 0, f.z - hip.z), hl = hd.length(); if (hl > 0.6) { hd.multiplyScalar(0.6 / hl); f.x = hip.x + hd.x; f.z = hip.z + hd.z; }
+      const ankle = V(f.x, 0.085 + lift[s], f.z + 0.03);
+      const knee = ik(hip, ankle, 0.45, 0.44, hip.clone().add(V(s === 'L' ? -0.2 : 0.2, -0.3, -1)));
+      setSeg(lg.th, hip, knee); setSeg(lg.sho, hip.clone().lerp(knee, 0.0), hip.clone().lerp(knee, 0.58)); setSeg(lg.sh, knee, ankle); lg.kn.position.copy(knee); lg.hj.position.copy(hip);
+      setSeg(lg.sock, ankle.clone().lerp(knee, -0.05), ankle.clone().lerp(knee, 0.2));
+      lg.shoe.position.set(f.x, lift[s], f.z); lg.shoe.rotation.set(-lift[s] * 5, s === 'L' ? 0.28 : -0.28, 0);
+      J['knee' + s] = knee; J['foot' + s] = f;
+    }
+    Object.assign(J, { hips, neck, head: headP, shR, elbow, wrist, free, feet: foot.L.clone().add(foot.R).multiplyScalar(0.5).setY(0.05) });
     this.bhNow = P.bh;
     this.root.updateMatrixWorld(true);
   }
@@ -484,7 +552,7 @@ function buildDemo(spec, env) {
     const ro = sh.rootOffset || (isL && spec.rootOffset) || S.rootOffset || [0, 0, 0];
     const baseOff = P.l2wDir(V(...ro));
     let start, tc, ballC, rootOff, prevOff = lastOff[sh.by].clone();
-    const measure = (entry) => { const pose = sampleInst(entry.inst, tc - entry.start); pose.rootOff = entry.rootOff.clone(); P.apply(pose); return P.world('racketCenter').addScaledVector(P.hitNormal(), BR + 0.006); };
+    const measure = (entry) => { const pose = sampleInst(entry.inst, tc - entry.start); pose.rootOff = entry.rootOff.clone(); if (entry.stepIn) { pose.stepIn = entry.stepIn; pose.stepW = 1; } P.apply(pose); return P.world('racketCenter').addScaledVector(P.hitNormal(), BR + 0.006); };
     let entry;
     if (i === 0) {
       start = 0.3; rootOff = baseOff.clone(); prevOff = baseOff.clone(); tc = start + inst.tc;
@@ -513,16 +581,16 @@ function buildDemo(spec, env) {
       rootOff = baseOff.clone().add(shift);
       const remL = P.w2lDir(V().subVectors(delta, shift));
       shiftKeys(inst, remL);
-      if (remL.z < -0.02) inst.keys.forEach(k => { k.body.lean += Math.min(0.45, -remL.z * 1.1); });
+      if (remL.z < -0.02) { inst.stepIn0 = Math.min(0.42, -remL.z); inst.keys.forEach(k => { k.body.lean += Math.min(0.3, -remL.z * 0.6); }); }
       samples = samples.filter(s => s.t < tc); events = events.filter(e => e.t < tc);
-      entry = { inst, start, end: start + inst.dur, rootOff, prevOff };
-      for (let it = 0; it < 5; it++) {
+      entry = { inst, start, end: start + inst.dur, rootOff, prevOff, stepIn: inst.stepIn0 || 0 };
+      for (let it = 0; it < 8; it++) {
         const d = V().subVectors(ballC, measure(entry)); if (d.length() < 0.006) break;
         const ro = entry.rootOff, nz = ro.z + d.z; let rz = nz;
         if (isL && P.base.z + rz < 1.42) rz = 1.42 - P.base.z; if (!isL && P.base.z + rz > -1.42) rz = -1.42 - P.base.z;
         ro.x += d.x; ro.z = rz;
         const resid = nz - rz;
-        if (Math.abs(resid) > 0.004) { shiftKeys(inst, P.w2lDir(V(0, 0, resid))); inst.keys.forEach(k => { k.body.lean = Math.min(0.95, k.body.lean + Math.abs(resid) * 1.2); }); }
+        if (Math.abs(resid) > 0.004) { shiftKeys(inst, P.w2lDir(V(0, 0, resid))); entry.stepIn = Math.min(0.42, (entry.stepIn || 0) + Math.abs(resid)); inst.keys.forEach(k => { k.body.lean = Math.min(0.8, k.body.lean + Math.abs(resid) * 0.6); }); }
         if (Math.abs(d.y) > 0.004) shiftKeys(inst, V(0, d.y, 0));
       }
     }
@@ -617,7 +685,7 @@ class Stage {
     this.O.setGrip('shakeNeutral', false);
     try {
       const bin = Uint8Array.from(atob(HAND_GLB_B64), c => c.charCodeAt(0)).buffer;
-      new GLTFLoader().parse(bin, '', gltf => { HAND_ASSET = gltf; for (const P of [this.L, this.O]) { const id = P.gripId; P.gripId = null; P.setGrip(id || 'shakeNeutral', false); } if (this.demo) this.apply(this.t); }, err => console.warn('hand model', err));
+      new GLTFLoader().parse(bin, '', gltf => { HAND_ASSET = gltf; for (const P of [this.L, this.O]) { const id = P.gripId; P.gripId = null; P.setGrip(id || 'shakeNeutral', false); P.buildFreeHand(); } if (this.demo) this.apply(this.t); }, err => console.warn('hand model', err));
     } catch (err) { console.warn('hand model', err); }
     this.texStripe = ballTexture(true); this.texPlain = ballTexture(false);
     this.ballMat = new THREE.MeshStandardMaterial({ map: this.texStripe, roughness: 0.45 });
@@ -682,7 +750,8 @@ class Stage {
   }
   resize() {
     const w = this.el.clientWidth, h = this.el.clientHeight; if (!w || !h) return;
-    this.renderer.setSize(w, h, false); this.camera.aspect = w / h; this.camera.updateProjectionMatrix();
+    this.renderer.setSize(w, h, false); this.camera.aspect = w / h;
+    this.camera.fov = clamp(2 * Math.atan(Math.tan(24 * D2R) / (w / h)) / D2R, 45, 80); this.camera.updateProjectionMatrix();
   }
   configure({ lefty, grip, highlight, swapRubber }) {
     this.lefty = lefty;
@@ -782,9 +851,9 @@ class Stage {
         tgt = c; pos = c.clone().addScaledVector(side, 0.8).add(V(0, 0.16, -0.08));
         this.apply(save); break;
       }
-      default: pos = V(0.45 * sx, 2.0, 4.1); tgt = V(0, 0.85, 0.35); name = 'behind';
+      default: pos = V(0.55 * sx, 2.25, 5.0); tgt = V(0, 0.85, 0.6); name = 'behind';
     }
-    L.head.visible = L.hair.visible = L.neck.visible = name !== 'eyes';
+    L.headG.visible = L.neck.visible = name !== 'eyes';
     this.camState = { name, pos, tgt, track, anchor0: track ? this.trackPoint(track) : null, t0: performance.now(), dur: instant ? 0 : 700, from: { pos: this.camera.position.clone(), tgt: this.controls.target.clone() }, lastTrack: null };
     this.hooks.onCamera?.(name);
   }
@@ -806,9 +875,10 @@ class Stage {
   }
   apply(t) {
     const D = this.demo; if (!D) return;
-    this.L.apply(poseAt(D.tl.learner, t)); this.O.apply(poseAt(D.tl.opponent, t));
-    if (this.ghostDemo) this.Gh.apply(poseAt(this.ghostDemo.tl.learner, t));
     const s = sampleBall(D.samples, t);
+    const withLook = (P, pose) => { if (s && !s.hidden) pose.look = P.w2l(s.p, pose.rootOff); return pose; };
+    this.L.apply(withLook(this.L, poseAt(D.tl.learner, t))); this.O.apply(withLook(this.O, poseAt(D.tl.opponent, t)));
+    if (this.ghostDemo) this.Gh.apply(poseAt(this.ghostDemo.tl.learner, t));
     if (!s || s.hidden) { this.ball.visible = false; this.curBall = null; }
     else { this.ball.visible = true; this.ball.position.copy(s.p); this.ball.quaternion.copy(s.q); this.curBall = s; }
     // free-hand ball while holding: keep ball on palm for learner serve pre-toss
@@ -849,10 +919,22 @@ class Stage {
     };
     if (pr) { this.protLabel.textContent = pr.text; proj(pr.pos, this.protLabel); } else if (this.protLabel) this.protLabel.style.display = 'none';
     if (this.tossLabel) { if (this.tossMark && O.has('toss')) proj(D.toss.p.clone().add(V(0.04, 0.17, 0)), this.tossLabel); else this.tossLabel.style.display = 'none'; }
-    const showLabels = O.has('labels');
+    const showLabels = O.has('labels'); const shown = [];
     for (const c of this.callouts) {
       if (!showLabels || (c.target === 'ball' && !this.ball.visible)) { c.el.style.display = 'none'; continue; }
-      proj(this.anchor(c.target), c.el);
+      const v = this.anchor(c.target).project(this.camera);
+      if (!(v.z < 1 && v.z > -1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1)) { c.el.style.display = 'none'; continue; }
+      c.x = (v.x * 0.5 + 0.5) * W; c.y = (-v.y * 0.5 + 0.5) * H; if (!c.w) { c.el.style.display = ''; c.w = c.el.querySelector('.txt').offsetWidth || 0; } shown.push(c);
+    }
+    // keep labels on screen and apart: flip to the left near the right edge, then spread vertically
+    shown.sort((a, b) => a.y - b.y); const placed = [];
+    for (const c of shown) {
+      const x0 = clamp(c.x + 6, 4, Math.max(4, W - c.w - 6));
+      let ty = Math.max(44, c.y - 26);
+      for (const p of placed) if (x0 < p.x1 + 4 && x0 + c.w > p.x0 - 4 && ty < p.y + 24 && ty > p.y - 24) ty = p.y + 24;
+      placed.push({ x0, x1: x0 + c.w, y: ty });
+      c.el.style.display = ''; c.el.style.transform = `translate(${c.x}px, ${c.y}px)`;
+      c.el.style.setProperty('--dy', (ty - c.y) + 'px'); c.el.style.setProperty('--dx', (x0 - c.x) + 'px');
     }
   }
   hud() {
